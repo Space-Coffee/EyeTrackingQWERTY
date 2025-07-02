@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 
-public class ETCube : ETObject
+public class Character : ETObject
 {
     public Color HighLightColor;
+    public char character;
 
     private Color originColor;
     private Renderer targetRenderer;
@@ -22,11 +23,13 @@ public class ETCube : ETObject
     {
         base.IsFocused();
         targetRenderer.material.color = HighLightColor;
+        EyeTrackingManager.Singleton.StartTimer(this);
     }
 
     public override void UnFocused()
     {
         base.UnFocused();
         targetRenderer.material.color = originColor;
+        EyeTrackingManager.Singleton.StopTimer();
     }
 }

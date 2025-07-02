@@ -60,7 +60,7 @@ namespace ReadyPlayerMe
 
         private static string GetShaderRoot()
         {
-            var pipeline = GraphicsSettings.renderPipelineAsset;
+            var pipeline = GraphicsSettings.defaultRenderPipeline;
             return pipeline?.GetType().Name == UrpAssetName ? "GLTFUtility/URP" : "GLTFUtility";
         }
 

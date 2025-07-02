@@ -2,15 +2,15 @@
 using Unity.XR.PXR;
 using UnityEngine.XR;
 using TMPro;
+using System.Collections;
+using UnityEngine.UI;
+using System.Linq;
 
 public class EyeTrackingManager : MonoBehaviour
 {
     public Transform Origin;
-    public GameObject EyeCoordinates;
     public GameObject Models;
-    public Transform Greenpoint;
     public GameObject SpotLight;
-    public TMP_Text GazeOffsetText;
     
     private Vector3 combineEyeGazeVector;
     private Vector3 combineEyeGazeOriginOffset;
@@ -31,6 +31,25 @@ public class EyeTrackingManager : MonoBehaviour
     private Transform selectedObj;
 
     private bool wasPressed;
+
+    public float glazeDuration = 2f; // czas w sekundach
+    public Image progressBar;
+    public string Text = "";
+
+    private Coroutine timerCoroutine;
+
+    public static EyeTrackingManager Singleton { get; private set; }
+
+    private void Awake()
+    {
+        if (Singleton != null && Singleton != this) 
+        {
+            Destroy(gameObject); 
+            return;
+        }
+        Singleton = this;
+    }
+
     void Start()
     {
         combineEyeGazeOriginOffset = Vector3.zero;
@@ -41,7 +60,7 @@ public class EyeTrackingManager : MonoBehaviour
 
     void Update()
     {
-        //Offest Adjustment
+        //Offest Adjustment (right knob)
         if (InputDevices.GetDeviceAtXRNode(XRNode.RightHand).TryGetFeatureValue(CommonUsages.primary2DAxis, out primary2DAxis))
         {
 
@@ -49,9 +68,6 @@ public class EyeTrackingManager : MonoBehaviour
             combineEyeGazeOriginOffset.y += primary2DAxis.y*0.001f;
 
         }
-        GazeOffsetText.text = combineEyeGazeOriginOffset.ToString("F3");
-
-
 
         PXR_EyeTracking.GetHeadPosMatrix(out headPoseMatrix);
         PXR_EyeTracking.GetCombineEyeGazeVector(out combineEyeGazeVector);
@@ -67,19 +83,44 @@ public class EyeTrackingManager : MonoBehaviour
         GazeTargetControl(combineEyeGazeOriginInWorldSpace, combineEyeGazeVectorInWorldSpace);
         
     }
+    public void StartTimer(Character character)
+    {
+        if (timerCoroutine != null)
+            StopCoroutine(timerCoroutine);
 
+        timerCoroutine = StartCoroutine(TimerRoutine(glazeDuration, character));
+    }
+    private IEnumerator TimerRoutine(float seconds, Character character)
+    {
+        float elapsed = 0f;
+
+        while (elapsed < seconds)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / seconds);
+            progressBar.fillAmount = progress;
+            yield return null;
+        }
+
+        progressBar.fillAmount = 1f;
+        Text.Append(character.character);
+    }
+
+    public void StopTimer()
+    {
+        if (timerCoroutine != null)
+        {
+            StopCoroutine(timerCoroutine);
+            timerCoroutine = null;
+            progressBar.fillAmount = 0f;
+        }
+    }
 
     void GazeTargetControl(Vector3 origin,Vector3 vector)
     {
         Ray ray = new Ray(origin,vector);
         if (Physics.SphereCast(origin,0.0005f,vector,out hitinfo))
         {
-            if (hitinfo.collider.transform.tag.Equals("Target"))
-            {
-                Greenpoint.gameObject.SetActive(true);
-                Greenpoint.position= hitinfo.point;
-            }
-
             if (selectedObj != null && selectedObj != hitinfo.transform)
             {
                 if(selectedObj.GetComponent<ETObject>()!=null)
@@ -102,7 +143,6 @@ public class EyeTrackingManager : MonoBehaviour
                     selectedObj.GetComponent<ETObject>().UnFocused();
                 selectedObj = null;
             }
-            Greenpoint.gameObject.SetActive(false);
-        }    
+        }
     }
 }
