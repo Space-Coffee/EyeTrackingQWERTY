@@ -34,7 +34,8 @@ public class EyeTrackingManager : MonoBehaviour
 
     public float glazeDuration = 2f; // czas w sekundach
     public Image progressBar;
-    public string Text = "";
+    public string Text = "Test";
+    public TMP_Text display;
 
     private Coroutine timerCoroutine;
 
@@ -69,6 +70,8 @@ public class EyeTrackingManager : MonoBehaviour
 
         }
 
+        display.text = Text;
+
         PXR_EyeTracking.GetHeadPosMatrix(out headPoseMatrix);
         PXR_EyeTracking.GetCombineEyeGazeVector(out combineEyeGazeVector);
         PXR_EyeTracking.GetCombineEyeGazePoint(out combineEyeGazeOrigin);
@@ -85,6 +88,7 @@ public class EyeTrackingManager : MonoBehaviour
     }
     public void StartTimer(Character character)
     {
+        progressBar.fillAmount = 0f;
         if (timerCoroutine != null)
             StopCoroutine(timerCoroutine);
 
